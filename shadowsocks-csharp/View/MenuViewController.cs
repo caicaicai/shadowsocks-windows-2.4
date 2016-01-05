@@ -32,7 +32,6 @@ namespace Shadowsocks.View
         private MenuItem ShareOverLANItem;
         private MenuItem SeperatorItem;
         private MenuItem ConfigItem;
-        private MenuItem ServersItem;
         private MenuItem globalModeItem;
         private MenuItem PACModeItem;
         private MenuItem localPACItem;
@@ -41,7 +40,6 @@ namespace Shadowsocks.View
         private MenuItem updateFromGFWListItem;
         private MenuItem editGFWUserRuleItem;
         private MenuItem editOnlinePACItem;
-        private ConfigForm configForm;
         private string _urlToOpen;
 
         public MenuViewController(ShadowsocksController controller)
@@ -69,15 +67,15 @@ namespace Shadowsocks.View
             this.updateChecker = new UpdateChecker();
             updateChecker.NewVersionFound += updateChecker_NewVersionFound;
 
-            LoadCurrentConfiguration();
+            //LoadCurrentConfiguration();
 
-            updateChecker.CheckUpdate(controller.GetConfiguration());
+            //updateChecker.CheckUpdate(controller.GetConfiguration());
 
-            if (controller.GetConfiguration().isDefault)
-            {
-                _isFirstRun = true;
-                ShowConfigForm();
-            }
+            //if (controller.GetConfiguration().isDefault)
+            //{
+            //    _isFirstRun = true;
+            //    ShowConfigForm();
+            //}
         }
 
         void controller_Errored(object sender, System.IO.ErrorEventArgs e)
@@ -106,9 +104,9 @@ namespace Shadowsocks.View
             {
                 icon = Resources.ss24;
             }
-            Configuration config = controller.GetConfiguration();
-            bool enabled = config.enabled;
-            bool global = config.global;
+            AuthController auth = controller.GetAuth();
+            bool enabled = auth.enableSystemProxy;
+            bool global = auth.global;
             if (!enabled)
             {
                 Bitmap iconCopy = new Bitmap(icon);
@@ -128,8 +126,8 @@ namespace Shadowsocks.View
             string text = I18N.GetString("Shadowsocks") + " " + UpdateChecker.Version + "\n" +
                 (enabled ?
                     I18N.GetString("System Proxy On: ") + (global ? I18N.GetString("Global") : I18N.GetString("PAC")) :
-                    String.Format(I18N.GetString("Running: Port {0}"), config.localPort))  // this feedback is very important because they need to know Shadowsocks is running
-                + "\n" + config.GetCurrentServer().FriendlyName();
+                    String.Format(I18N.GetString("Running: Port {0}"), auth.localPort))  // this feedback is very important because they need to know Shadowsocks is running
+                + "\n" + auth.GetCurrentServer().FriendlyName();
             _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
         }
 
@@ -150,12 +148,6 @@ namespace Shadowsocks.View
                 this.modeItem = CreateMenuGroup("Mode", new MenuItem[] {
                     this.PACModeItem = CreateMenuItem("PAC", new EventHandler(this.PACModeItem_Click)),
                     this.globalModeItem = CreateMenuItem("Global", new EventHandler(this.GlobalModeItem_Click))
-                }),
-                this.ServersItem = CreateMenuGroup("Servers", new MenuItem[] {
-                    this.SeperatorItem = new MenuItem("-"),
-                    this.ConfigItem = CreateMenuItem("Edit Servers...", new EventHandler(this.Config_Click)),
-                    CreateMenuItem("Show QRCode...", new EventHandler(this.QRCodeItem_Click)),
-                    CreateMenuItem("Scan QRCode from Screen...", new EventHandler(this.ScanQRCodeItem_Click))
                 }),
                 CreateMenuGroup("PAC ", new MenuItem[] {
                     this.localPACItem = CreateMenuItem("Local PAC", new EventHandler(this.LocalPACItem_Click)),
@@ -179,24 +171,24 @@ namespace Shadowsocks.View
 
         private void controller_ConfigChanged(object sender, EventArgs e)
         {
-            LoadCurrentConfiguration();
+            //LoadCurrentConfiguration();
             UpdateTrayIcon();
         }
 
         private void controller_EnableStatusChanged(object sender, EventArgs e)
         {
-            enableItem.Checked = controller.GetConfiguration().enabled;
+            enableItem.Checked = controller.GetAuth().enableSystemProxy;
             modeItem.Enabled = enableItem.Checked;
         }
 
         void controller_ShareOverLANStatusChanged(object sender, EventArgs e)
         {
-            ShareOverLANItem.Checked = controller.GetConfiguration().shareOverLan;
+            ShareOverLANItem.Checked = controller.GetAuth().shareOverLan;
         }
 
         void controller_EnableGlobalChanged(object sender, EventArgs e)
         {
-            globalModeItem.Checked = controller.GetConfiguration().global;
+            globalModeItem.Checked = controller.GetAuth().enableSystemProxy;
             PACModeItem.Checked = !globalModeItem.Checked;
         }
 
@@ -241,70 +233,41 @@ namespace Shadowsocks.View
         }
 
 
-        private void LoadCurrentConfiguration()
-        {
-            Configuration config = controller.GetConfiguration();
-            UpdateServersMenu();
-            enableItem.Checked = config.enabled;
-            modeItem.Enabled = config.enabled;
-            globalModeItem.Checked = config.global;
-            PACModeItem.Checked = !config.global;
-            ShareOverLANItem.Checked = config.shareOverLan;
-            AutoStartupItem.Checked = AutoStartup.Check();
-            onlinePACItem.Checked = onlinePACItem.Enabled && config.useOnlinePac;
-            localPACItem.Checked = !onlinePACItem.Checked;
-            UpdatePACItemsEnabledStatus();
-        }
 
         private void UpdateServersMenu()
         {
-            var items = ServersItem.MenuItems;
-            while (items[0] != SeperatorItem)
-            {
-                items.RemoveAt(0);
-            }
+            //var items = ServersItem.MenuItems;
+            //while (items[0] != SeperatorItem)
+            //{
+            //    items.RemoveAt(0);
+            //}
 
-            Configuration configuration = controller.GetConfiguration();
-            for (int i = 0; i < configuration.configs.Count; i++)
-            {
-                Server server = configuration.configs[i];
-                MenuItem item = new MenuItem(server.FriendlyName());
-                item.Tag = i;
-                item.Click += AServerItem_Click;
-                items.Add(i, item);
-            }
+            //Configuration configuration = controller.GetConfiguration();
+            //for (int i = 0; i < configuration.configs.Count; i++)
+            //{
+            //    Server server = configuration.configs[i];
+            //    MenuItem item = new MenuItem(server.FriendlyName());
+            //    item.Tag = i;
+            //    item.Click += AServerItem_Click;
+            //    items.Add(i, item);
+            //}
 
-            if (configuration.index >= 0 && configuration.index < configuration.configs.Count)
-            {
-                items[configuration.index].Checked = true;
-            }
+            //if (configuration.index >= 0 && configuration.index < configuration.configs.Count)
+            //{
+            //    items[configuration.index].Checked = true;
+            //}
         }
 
-        private void ShowConfigForm()
-        {
-            if (configForm != null)
-            {
-                configForm.Activate();
-            }
-            else
-            {
-                configForm = new ConfigForm(controller);
-                configForm.Show();
-                configForm.FormClosed += configForm_FormClosed;
-            }
-        }
+
 
         void configForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            configForm = null;
+            //configForm = null;
             Util.Utils.ReleaseMemory();
             ShowFirstTimeBalloon();
         }
 
-        private void Config_Click(object sender, EventArgs e)
-        {
-            ShowConfigForm();
-        }
+
 
         private void Quit_Click(object sender, EventArgs e)
         {
@@ -327,36 +290,36 @@ namespace Shadowsocks.View
 
         private void AboutItem_Click(object sender, EventArgs e)
         {
-            Process.Start("https://github.com/shadowsocks/shadowsocks-csharp");
+            Process.Start("https://ss.xiaocaicai.com");
         }
 
         private void notifyIcon1_DoubleClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                ShowConfigForm();
+                //ShowConfigForm();
             }
         }
 
         private void EnableItem_Click(object sender, EventArgs e)
         {
-            controller.ToggleEnable(!enableItem.Checked);
+            //controller.ToggleEnable(!enableItem.Checked);
         }
 
         private void GlobalModeItem_Click(object sender, EventArgs e)
         {
-            controller.ToggleGlobal(true);
+            //controller.ToggleGlobal(true);
         }
 
         private void PACModeItem_Click(object sender, EventArgs e)
         {
-            controller.ToggleGlobal(false);
+            //controller.ToggleGlobal(false);
         }
 
         private void ShareOverLANItem_Click(object sender, EventArgs e)
         {
             ShareOverLANItem.Checked = !ShareOverLANItem.Checked;
-            controller.ToggleShareOverLAN(ShareOverLANItem.Checked);
+            //controller.ToggleShareOverLAN(ShareOverLANItem.Checked);
         }
 
         private void EditPACFileItem_Click(object sender, EventArgs e)
@@ -377,7 +340,7 @@ namespace Shadowsocks.View
         private void AServerItem_Click(object sender, EventArgs e)
         {
             MenuItem item = (MenuItem)sender;
-            controller.SelectServerIndex((int)item.Tag);
+            //controller.SelectServerIndex((int)item.Tag);
         }
 
         private void ShowLogItem_Click(object sender, EventArgs e)
@@ -389,100 +352,13 @@ namespace Shadowsocks.View
 
         private void QRCodeItem_Click(object sender, EventArgs e)
         {
-            QRCodeForm qrCodeForm = new QRCodeForm(controller.GetQRCodeForCurrentServer());
+            //QRCodeForm qrCodeForm = new QRCodeForm(controller.GetQRCodeForCurrentServer());
             //qrCodeForm.Icon = this.Icon;
             // TODO
-            qrCodeForm.Show();
+            //qrCodeForm.Show();
         }
 
-        private void ScanQRCodeItem_Click(object sender, EventArgs e)
-        {
-            foreach (Screen screen in Screen.AllScreens)
-            {
-                using (Bitmap fullImage = new Bitmap(screen.Bounds.Width,
-                                                screen.Bounds.Height))
-                {
-                    using (Graphics g = Graphics.FromImage(fullImage))
-                    {
-                        g.CopyFromScreen(screen.Bounds.X,
-                                         screen.Bounds.Y,
-                                         0, 0,
-                                         fullImage.Size,
-                                         CopyPixelOperation.SourceCopy);
-                    }
-                    int maxTry = 10;
-                    for (int i = 0; i < maxTry; i++)
-                    {
-                        int marginLeft = (int)((double)fullImage.Width * i / 2.5 / maxTry);
-                        int marginTop = (int)((double)fullImage.Height * i / 2.5 / maxTry);
-                        Rectangle cropRect = new Rectangle(marginLeft, marginTop, fullImage.Width - marginLeft * 2, fullImage.Height - marginTop * 2);
-                        Bitmap target = new Bitmap(screen.Bounds.Width, screen.Bounds.Height);
 
-                        double imageScale = (double)screen.Bounds.Width / (double)cropRect.Width;
-                        using (Graphics g = Graphics.FromImage(target))
-                        {
-                            g.DrawImage(fullImage, new Rectangle(0, 0, target.Width, target.Height),
-                                            cropRect,
-                                            GraphicsUnit.Pixel);
-                        }
-                        var source = new BitmapLuminanceSource(target);
-                        var bitmap = new BinaryBitmap(new HybridBinarizer(source));
-                        QRCodeReader reader = new QRCodeReader();
-                        var result = reader.decode(bitmap);
-                        if (result != null)
-                        {
-                            var success = controller.AddServerBySSURL(result.Text);
-                            QRCodeSplashForm splash = new QRCodeSplashForm();
-                            if (success)
-                            {
-                                splash.FormClosed += splash_FormClosed;
-                            }
-                            else if (result.Text.StartsWith("http://") || result.Text.StartsWith("https://"))
-                            {
-                                _urlToOpen = result.Text;
-                                splash.FormClosed += openURLFromQRCode;
-                            }
-                            else
-                            {
-                                MessageBox.Show(I18N.GetString("Failed to decode QRCode"));
-                                return;
-                            }
-                            double minX = Int32.MaxValue, minY = Int32.MaxValue, maxX = 0, maxY = 0;
-                            foreach (ResultPoint point in result.ResultPoints)
-                            {
-                                minX = Math.Min(minX, point.X);
-                                minY = Math.Min(minY, point.Y);
-                                maxX = Math.Max(maxX, point.X);
-                                maxY = Math.Max(maxY, point.Y);
-                            }
-                            minX /= imageScale;
-                            minY /= imageScale;
-                            maxX /= imageScale;
-                            maxY /= imageScale;
-                            // make it 20% larger
-                            double margin = (maxX - minX) * 0.20f;
-                            minX += -margin + marginLeft;
-                            maxX += margin + marginLeft;
-                            minY += -margin + marginTop;
-                            maxY += margin + marginTop;
-                            splash.Location = new Point(screen.Bounds.X, screen.Bounds.Y);
-                            // we need a panel because a window has a minimal size
-                            // TODO: test on high DPI
-                            splash.TargetRect = new Rectangle((int)minX + screen.Bounds.X, (int)minY + screen.Bounds.Y, (int)maxX - (int)minX, (int)maxY - (int)minY);
-                            splash.Size = new Size(fullImage.Width, fullImage.Height);
-                            splash.Show();
-                            return;
-                        }
-                    }
-                }
-            }
-            MessageBox.Show(I18N.GetString("No QRCode found. Try to zoom in or move it to the center of the screen."));
-        }
-
-        void splash_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            ShowConfigForm();
-        }
 
         void openURLFromQRCode(object sender, FormClosedEventArgs e)
         {
@@ -511,11 +387,11 @@ namespace Shadowsocks.View
         {
             if (!onlinePACItem.Checked)
             {
-                if (String.IsNullOrEmpty(controller.GetConfiguration().pacUrl))
+                if (String.IsNullOrEmpty(controller.GetAuth().pacUrl))
                 {
                     UpdateOnlinePACURLItem_Click(sender, e);
                 }
-                if (!String.IsNullOrEmpty(controller.GetConfiguration().pacUrl))
+                if (!String.IsNullOrEmpty(controller.GetAuth().pacUrl))
                 {
                     localPACItem.Checked = false;
                     onlinePACItem.Checked = true;
@@ -527,7 +403,7 @@ namespace Shadowsocks.View
 
         private void UpdateOnlinePACURLItem_Click(object sender, EventArgs e)
         {
-            string origPacUrl = controller.GetConfiguration().pacUrl;
+            string origPacUrl = controller.GetAuth().pacUrl;
             string pacUrl = Microsoft.VisualBasic.Interaction.InputBox(
                 I18N.GetString("Please input PAC Url"),
                 I18N.GetString("Edit Online PAC URL"),

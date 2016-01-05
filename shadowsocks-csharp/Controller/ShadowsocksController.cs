@@ -19,12 +19,13 @@ namespace Shadowsocks.Controller
 
         private Listener _listener;
         private PACServer _pacServer;
-        private Configuration _config;
         private PolipoRunner polipoRunner;
         private GFWListUpdater gfwListUpdater;
         private bool stopped = false;
 
         private bool _systemProxyIsDirty = false;
+
+        private AuthController _auth;
 
         public class PathEventArgs : EventArgs
         {
@@ -46,9 +47,10 @@ namespace Shadowsocks.Controller
 
         public event ErrorEventHandler Errored;
 
-        public ShadowsocksController()
+        public ShadowsocksController(AuthController au)
         {
-            _config = Configuration.Load();
+            //_config = Configuration.Load();
+            _auth = au;
         }
 
         public void Start()
@@ -64,78 +66,6 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public Server GetCurrentServer()
-        {
-            return _config.GetCurrentServer();
-        }
-
-        // always return copy
-        public Configuration GetConfiguration()
-        {
-            return Configuration.Load();
-        }
-
-        public void SaveServers(List<Server> servers, int localPort)
-        {
-            _config.configs = servers;
-            _config.localPort = localPort;
-            SaveConfig(_config);
-        }
-
-        public bool AddServerBySSURL(string ssURL)
-        {
-            try
-            {
-                var server = new Server(ssURL);
-                _config.configs.Add(server);
-                _config.index = _config.configs.Count - 1;
-                SaveConfig(_config);
-                return true;
-            }
-            catch (Exception e)
-            {
-                Logging.LogUsefulException(e);
-                return false;
-            }
-        }
-
-        public void ToggleEnable(bool enabled)
-        {
-            _config.enabled = enabled;
-            UpdateSystemProxy();
-            SaveConfig(_config);
-            if (EnableStatusChanged != null)
-            {
-                EnableStatusChanged(this, new EventArgs());
-            }
-        }
-
-        public void ToggleGlobal(bool global)
-        {
-            _config.global = global;
-            UpdateSystemProxy();
-            SaveConfig(_config);
-            if (EnableGlobalChanged != null)
-            {
-                EnableGlobalChanged(this, new EventArgs());
-            }
-        }
-
-        public void ToggleShareOverLAN(bool enabled)
-        {
-            _config.shareOverLan = enabled;
-            SaveConfig(_config);
-            if (ShareOverLANStatusChanged != null)
-            {
-                ShareOverLANStatusChanged(this, new EventArgs());
-            }
-        }
-
-        public void SelectServerIndex(int index)
-        {
-            _config.index = index;
-            SaveConfig(_config);
-        }
 
         public void Stop()
         {
@@ -152,9 +82,9 @@ namespace Shadowsocks.Controller
             {
                 polipoRunner.Stop();
             }
-            if (_config.enabled)
+            if (_auth.enableSystemProxy)
             {
-                SystemProxy.Update(_config, true);
+                SystemProxy.Update(_auth, true);
             }
         }
 
@@ -176,27 +106,19 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public string GetQRCodeForCurrentServer()
-        {
-            Server server = GetCurrentServer();
-            string parts = server.method + ":" + server.password + "@" + server.server + ":" + server.server_port;
-            string base64 = System.Convert.ToBase64String(Encoding.UTF8.GetBytes(parts));
-            return "ss://" + base64;
-        }
 
         public void UpdatePACFromGFWList()
         {
             if (gfwListUpdater != null)
             {
-                gfwListUpdater.UpdatePACFromGFWList(_config);
+                gfwListUpdater.UpdatePACFromGFWList(_auth);
             }
         }
 
         public void SavePACUrl(string pacUrl)
         {
-            _config.pacUrl = pacUrl;
+            _auth.pacUrl = pacUrl;
             UpdateSystemProxy();
-            SaveConfig(_config);
             if (ConfigChanged != null)
             {
                 ConfigChanged(this, new EventArgs());
@@ -205,9 +127,8 @@ namespace Shadowsocks.Controller
 
         public void UseOnlinePAC(bool useOnlinePac)
         {
-            _config.useOnlinePac = useOnlinePac;
+            _auth.useOnlinePac = useOnlinePac;
             UpdateSystemProxy();
-            SaveConfig(_config);
             if (ConfigChanged != null)
             {
                 ConfigChanged(this, new EventArgs());
@@ -217,7 +138,7 @@ namespace Shadowsocks.Controller
         protected void Reload()
         {
             // some logic in configuration updated the config when saving, we need to read it again
-            _config = Configuration.Load();
+            //_config = Configuration.Load();
 
             if (polipoRunner == null)
             {
@@ -228,7 +149,7 @@ namespace Shadowsocks.Controller
                 _pacServer = new PACServer();
                 _pacServer.PACFileChanged += pacServer_PACFileChanged;
             }
-            _pacServer.UpdateConfiguration(_config);
+            _pacServer.UpdateConfiguration(_auth);
             if (gfwListUpdater == null)
             {
                 gfwListUpdater = new GFWListUpdater();
@@ -248,17 +169,17 @@ namespace Shadowsocks.Controller
             polipoRunner.Stop();
             try
             {
-                polipoRunner.Start(_config);
+                polipoRunner.Start(_auth);
 
-                TCPRelay tcpRelay = new TCPRelay(_config);
-                UDPRelay udpRelay = new UDPRelay(_config);
+                TCPRelay tcpRelay = new TCPRelay(_auth);
+                //UDPRelay udpRelay = new UDPRelay(_config);
                 List<Listener.Service> services = new List<Listener.Service>();
                 services.Add(tcpRelay);
-                services.Add(udpRelay);
+                //services.Add(udpRelay);
                 services.Add(_pacServer);
                 services.Add(new PortForwarder(polipoRunner.RunningPort));
                 _listener = new Listener(services);
-                _listener.Start(_config);
+                _listener.Start(_auth);
             }
             catch (Exception e)
             {
@@ -295,9 +216,9 @@ namespace Shadowsocks.Controller
 
         private void UpdateSystemProxy()
         {
-            if (_config.enabled)
+            if (_auth.enableSystemProxy)
             {
-                SystemProxy.Update(_config, false);
+                SystemProxy.Update(_auth, false);
                 _systemProxyIsDirty = true;
             }
             else
@@ -305,7 +226,7 @@ namespace Shadowsocks.Controller
                 // only switch it off if we have switched it on
                 if (_systemProxyIsDirty)
                 {
-                    SystemProxy.Update(_config, false);
+                    SystemProxy.Update(_auth, false);
                     _systemProxyIsDirty = false;
                 }
             }
@@ -342,6 +263,11 @@ namespace Shadowsocks.Controller
                 Util.Utils.ReleaseMemory();
                 Thread.Sleep(30 * 1000);
             }
+        }
+
+        public AuthController GetAuth()
+        {
+            return _auth;
         }
     }
 }

@@ -38,11 +38,9 @@ namespace Shadowsocks
 #if !DEBUG
                 Logging.OpenLogFile();
 #endif
-                ShadowsocksController controller = new ShadowsocksController();
-
-                MenuViewController viewController = new MenuViewController(controller);
-
-                controller.Start();
+                AuthController au = new AuthController();
+                Login login = new Login(au);
+                login.Show();
 
                 Application.Run();
             }

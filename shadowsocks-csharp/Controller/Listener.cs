@@ -21,7 +21,7 @@ namespace Shadowsocks.Controller
             public EndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 1);
         }
 
-        Configuration _config;
+        AuthController _auth;
         bool _shareOverLAN;
         Socket _tcpSocket;
         Socket _udpSocket;
@@ -47,34 +47,34 @@ namespace Shadowsocks.Controller
             return false;
         }
 
-        public void Start(Configuration config)
+        public void Start(AuthController au)
         {
-            this._config = config;
-            this._shareOverLAN = config.shareOverLan;
+            this._auth = au;
+            this._shareOverLAN = _auth.shareOverLan;
 
-            if (CheckIfPortInUse(_config.localPort))
+            if (CheckIfPortInUse(_auth.localPort))
                 throw new Exception(I18N.GetString("Port already in use"));
 
             try
             {
                 // Create a TCP/IP socket.
                 _tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                //_udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                _udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                //_udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 IPEndPoint localEndPoint = null;
                 if (_shareOverLAN)
                 {
-                    localEndPoint = new IPEndPoint(IPAddress.Any, _config.localPort);
+                    localEndPoint = new IPEndPoint(IPAddress.Any, _auth.localPort);
                 }
                 else
                 {
-                    localEndPoint = new IPEndPoint(IPAddress.Loopback, _config.localPort);
+                    localEndPoint = new IPEndPoint(IPAddress.Loopback, _auth.localPort);
                 }
 
                 // Bind the socket to the local endpoint and listen for incoming connections.
                 _tcpSocket.Bind(localEndPoint);
-                _udpSocket.Bind(localEndPoint);
+                //_udpSocket.Bind(localEndPoint);
                 _tcpSocket.Listen(1024);
 
 
@@ -84,7 +84,7 @@ namespace Shadowsocks.Controller
                     new AsyncCallback(AcceptCallback),
                     _tcpSocket);
                 UDPState udpState = new UDPState();
-                _udpSocket.BeginReceiveFrom(udpState.buffer, 0, udpState.buffer.Length, 0, ref udpState.remoteEndPoint, new AsyncCallback(RecvFromCallback), udpState);
+                //_udpSocket.BeginReceiveFrom(udpState.buffer, 0, udpState.buffer.Length, 0, ref udpState.remoteEndPoint, new AsyncCallback(RecvFromCallback), udpState);
             }
             catch (SocketException)
             {

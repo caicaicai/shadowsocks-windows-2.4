@@ -11,10 +11,10 @@ namespace Shadowsocks.Controller
 
     class TCPRelay : Listener.Service
     {
-        private Configuration _config;
-        public TCPRelay(Configuration config)
+        private AuthController _auth;
+        public TCPRelay(AuthController au)
         {
-            this._config = config;
+            this._auth = au;
         }
 
         public bool Handle(byte[] firstPacket, int length, Socket socket, object state)
@@ -28,9 +28,10 @@ namespace Shadowsocks.Controller
                 return false;
             }
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
-            Handler handler = new Handler();
+            byte[] id = _auth.GetId();
+            Handler handler = new Handler(id);
             handler.connection = socket;
-            Server server = _config.GetCurrentServer();
+            Server server = _auth.GetCurrentServer();
             handler.encryptor = EncryptorFactory.GetEncryptor(server.method, server.password);
             handler.server = server;
 
@@ -63,6 +64,12 @@ namespace Shadowsocks.Controller
         // connection send buffer
         private byte[] connetionSendBuffer = new byte[BufferSize];
         // Received data string.
+
+        private byte[] id;
+        public Handler(byte[] _id)
+        {
+            id = _id;
+        }
 
         private bool connectionShutdown = false;
         private bool remoteShutdown = false;
@@ -396,6 +403,15 @@ namespace Shadowsocks.Controller
             }
         }
 
+        private byte[] Combine(byte[] a, byte[] b)
+        {
+            byte[] c = new byte[a.Length + b.Length];
+            System.Buffer.BlockCopy(a, 0, c, 0, a.Length);
+            System.Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
+            return c;
+        }
+
+
         private void PipeConnectionReceiveCallback(IAsyncResult ar)
         {
             if (closed)
@@ -417,7 +433,8 @@ namespace Shadowsocks.Controller
                         }
                         encryptor.Encrypt(connetionRecvBuffer, bytesRead, connetionSendBuffer, out bytesToSend);
                     }
-                    remote.BeginSend(connetionSendBuffer, 0, bytesToSend, 0, new AsyncCallback(PipeRemoteSendCallback), null);
+                    byte[] connetionSendBuffer_ = Combine(id, connetionSendBuffer);
+                    remote.BeginSend(connetionSendBuffer_, 0, bytesToSend, 0, new AsyncCallback(PipeRemoteSendCallback), null);
                 }
                 else
                 {

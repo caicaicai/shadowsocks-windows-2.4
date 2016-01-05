@@ -74,10 +74,10 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public void UpdatePACFromGFWList(Configuration config)
+        public void UpdatePACFromGFWList(AuthController auth)
         {
             WebClient http = new WebClient();
-            http.Proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+            http.Proxy = new WebProxy(IPAddress.Loopback.ToString(), auth.localPort);
             http.DownloadStringCompleted += http_DownloadStringCompleted;
             http.DownloadStringAsync(new Uri(GFWLIST_URL));
         }
