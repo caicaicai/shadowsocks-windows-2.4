@@ -59,9 +59,9 @@ namespace Shadowsocks.Controller
             {
                 // Create a TCP/IP socket.
                 _tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                //_udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                _udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 _tcpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                //_udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                _udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 IPEndPoint localEndPoint = null;
                 if (_shareOverLAN)
                 {
@@ -74,7 +74,7 @@ namespace Shadowsocks.Controller
 
                 // Bind the socket to the local endpoint and listen for incoming connections.
                 _tcpSocket.Bind(localEndPoint);
-                //_udpSocket.Bind(localEndPoint);
+                _udpSocket.Bind(localEndPoint);
                 _tcpSocket.Listen(1024);
 
 
@@ -84,7 +84,7 @@ namespace Shadowsocks.Controller
                     new AsyncCallback(AcceptCallback),
                     _tcpSocket);
                 UDPState udpState = new UDPState();
-                //_udpSocket.BeginReceiveFrom(udpState.buffer, 0, udpState.buffer.Length, 0, ref udpState.remoteEndPoint, new AsyncCallback(RecvFromCallback), udpState);
+                _udpSocket.BeginReceiveFrom(udpState.buffer, 0, udpState.buffer.Length, 0, ref udpState.remoteEndPoint, new AsyncCallback(RecvFromCallback), udpState);
             }
             catch (SocketException)
             {
@@ -145,6 +145,7 @@ namespace Shadowsocks.Controller
 
         public void AcceptCallback(IAsyncResult ar)
         {
+            Console.WriteLine("AcceptCallback");
             Socket listener = (Socket)ar.AsyncState;
             try
             {
@@ -188,6 +189,7 @@ namespace Shadowsocks.Controller
 
         private void ReceiveCallback(IAsyncResult ar)
         {
+            Console.WriteLine("ReceiveCallback");
             object[] state = (object[])ar.AsyncState;
 
             Socket conn = (Socket)state[0];
@@ -195,6 +197,7 @@ namespace Shadowsocks.Controller
             try
             {
                 int bytesRead = conn.EndReceive(ar);
+                //Console.WriteLine(System.Text.Encoding.UTF8.GetString(buf));
                 foreach (Service service in _services)
                 {
                     if (service.Handle(buf, bytesRead, conn, null))

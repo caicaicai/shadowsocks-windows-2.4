@@ -172,10 +172,10 @@ namespace Shadowsocks.Controller
                 polipoRunner.Start(_auth);
 
                 TCPRelay tcpRelay = new TCPRelay(_auth);
-                //UDPRelay udpRelay = new UDPRelay(_config);
+                UDPRelay udpRelay = new UDPRelay(_auth);
                 List<Listener.Service> services = new List<Listener.Service>();
                 services.Add(tcpRelay);
-                //services.Add(udpRelay);
+                services.Add(udpRelay);
                 services.Add(_pacServer);
                 services.Add(new PortForwarder(polipoRunner.RunningPort));
                 _listener = new Listener(services);

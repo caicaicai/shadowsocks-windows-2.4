@@ -11,11 +11,11 @@ namespace Shadowsocks.Controller
 {
     class UDPRelay : Listener.Service
     {
-        private Configuration _config;
+        private AuthController _auth;
         private LRUCache<IPEndPoint, UDPHandler> _cache;
-        public UDPRelay(Configuration config)
+        public UDPRelay(AuthController au)
         {
-            this._config = config;
+            this._auth = au;
             this._cache = new LRUCache<IPEndPoint, UDPHandler>(512);  // todo: choose a smart number
         }
 
@@ -34,7 +34,7 @@ namespace Shadowsocks.Controller
             UDPHandler handler = _cache.get(remoteEndPoint);
             if (handler == null)
             {
-                handler = new UDPHandler(socket, _config.GetCurrentServer(), remoteEndPoint);
+                handler = new UDPHandler(socket, _auth.GetCurrentServer(), remoteEndPoint);
                 _cache.add(remoteEndPoint, handler);
             }
             handler.Send(firstPacket, length);

@@ -9,7 +9,7 @@ namespace Shadowsocks.Controller
     {
         Dictionary<string, string> loginPara;
 
-        private string AuthServer = "172.26.3.71";
+        private string AuthServer = "192.168.1.3";
         private int AuthPort = 3721;
 
         public string EncryptType = "aes-256-cfb";

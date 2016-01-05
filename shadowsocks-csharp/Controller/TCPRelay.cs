@@ -385,6 +385,7 @@ namespace Shadowsocks.Controller
                             return;
                         }
                         encryptor.Decrypt(remoteRecvBuffer, bytesRead, remoteSendBuffer, out bytesToSend);
+                        //Console.WriteLine(System.Text.Encoding.UTF8.GetString(remoteSendBuffer));
                     }
                     connection.BeginSend(remoteSendBuffer, 0, bytesToSend, 0, new AsyncCallback(PipeConnectionSendCallback), null);
                 }
