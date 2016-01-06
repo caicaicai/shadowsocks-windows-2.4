@@ -38,9 +38,9 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public void Start(Configuration configuration)
+        public void Start(AuthController auth)
         {
-            Server server = configuration.GetCurrentServer();
+            Server server = auth.GetCurrentServer();
             if (_process == null)
             {
                 Process[] existingPolipo = Process.GetProcessesByName("ss_polipo");
@@ -58,9 +58,9 @@ namespace Shadowsocks.Controller
                 }
                 string polipoConfig = Resources.polipo_config;
                 _runningPort = this.GetFreePort();
-                polipoConfig = polipoConfig.Replace("__SOCKS_PORT__", configuration.localPort.ToString());
+                polipoConfig = polipoConfig.Replace("__SOCKS_PORT__", auth.localPort.ToString());
                 polipoConfig = polipoConfig.Replace("__POLIPO_BIND_PORT__", _runningPort.ToString());
-                polipoConfig = polipoConfig.Replace("__POLIPO_BIND_IP__", configuration.shareOverLan ? "0.0.0.0" : "127.0.0.1");
+                polipoConfig = polipoConfig.Replace("__POLIPO_BIND_IP__", auth.shareOverLan ? "0.0.0.0" : "127.0.0.1");
                 FileManager.ByteArrayToFile(temppath + "/polipo.conf", System.Text.Encoding.UTF8.GetBytes(polipoConfig));
 
                 _process = new Process();
@@ -73,6 +73,8 @@ namespace Shadowsocks.Controller
                 //_process.StartInfo.RedirectStandardOutput = true;
                 //_process.StartInfo.RedirectStandardError = true;
                 _process.Start();
+
+                Console.WriteLine(String.Format("proxy start on socket port:{0}, http port :{1}", auth.localPort.ToString(), _runningPort.ToString()));
             }
         }
 

@@ -26,10 +26,10 @@ namespace Shadowsocks.Controller
             _refreshReturn = InternetSetOption(IntPtr.Zero, INTERNET_OPTION_REFRESH, IntPtr.Zero, 0);
         }
 
-        public static void Update(Configuration config, bool forceDisable)
+        public static void Update(AuthController auth, bool forceDisable)
         {
-            bool global = config.global;
-            bool enabled = config.enabled;
+            bool global = auth.global;
+            bool enabled = auth.enableSystemProxy;
             if (forceDisable)
             {
                 enabled = false;
@@ -44,16 +44,16 @@ namespace Shadowsocks.Controller
                     if (global)
                     {
                         registry.SetValue("ProxyEnable", 1);
-                        registry.SetValue("ProxyServer", "127.0.0.1:" + config.localPort.ToString());
+                        registry.SetValue("ProxyServer", "127.0.0.1:" + auth.localPort.ToString());
                         registry.SetValue("AutoConfigURL", "");
                     }
                     else
                     {
                         string pacUrl;
-                        if (config.useOnlinePac && !string.IsNullOrEmpty(config.pacUrl))
-                            pacUrl = config.pacUrl;
+                        if (auth.useOnlinePac && !string.IsNullOrEmpty(auth.pacUrl))
+                            pacUrl = auth.pacUrl;
                         else
-                            pacUrl = "http://127.0.0.1:" + config.localPort.ToString() + "/pac?t=" + GetTimestamp(DateTime.Now);
+                            pacUrl = "http://127.0.0.1:" + auth.localPort.ToString() + "/pac?t=" + GetTimestamp(DateTime.Now);
                         registry.SetValue("ProxyEnable", 0);
                         registry.SetValue("ProxyServer", "");
                         registry.SetValue("AutoConfigURL", pacUrl);

@@ -21,7 +21,7 @@ namespace Shadowsocks.Controller
             public EndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 1);
         }
 
-        Configuration _config;
+        AuthController _auth;
         bool _shareOverLAN;
         Socket _tcpSocket;
         Socket _udpSocket;
@@ -47,12 +47,12 @@ namespace Shadowsocks.Controller
             return false;
         }
 
-        public void Start(Configuration config)
+        public void Start(AuthController auth)
         {
-            this._config = config;
-            this._shareOverLAN = config.shareOverLan;
+            this._auth = auth;
+            this._shareOverLAN = auth.shareOverLan;
 
-            if (CheckIfPortInUse(_config.localPort))
+            if (CheckIfPortInUse(_auth.localPort))
                 throw new Exception(I18N.GetString("Port already in use"));
 
             try
@@ -65,11 +65,11 @@ namespace Shadowsocks.Controller
                 IPEndPoint localEndPoint = null;
                 if (_shareOverLAN)
                 {
-                    localEndPoint = new IPEndPoint(IPAddress.Any, _config.localPort);
+                    localEndPoint = new IPEndPoint(IPAddress.Any, _auth.localPort);
                 }
                 else
                 {
-                    localEndPoint = new IPEndPoint(IPAddress.Loopback, _config.localPort);
+                    localEndPoint = new IPEndPoint(IPAddress.Loopback, _auth.localPort);
                 }
 
                 // Bind the socket to the local endpoint and listen for incoming connections.
