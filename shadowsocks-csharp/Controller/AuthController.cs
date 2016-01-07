@@ -9,7 +9,7 @@ namespace Shadowsocks.Controller
     {
         Dictionary<string, string> loginPara;
 
-        private string AuthServer = "www.xiaocaicai.com";
+        private string AuthServer = "xiaocaicai.com";
         private int AuthPort = 3721;
 
         public string EncryptType = "aes-256-cfb";
@@ -126,6 +126,14 @@ namespace Shadowsocks.Controller
         {
             byte[] toBytes = Encoding.ASCII.GetBytes(ID);
             return toBytes;
+        }
+
+        public static byte[] Combine(byte[] a, byte[] b)
+        {
+            byte[] c = new byte[a.Length + b.Length];
+            System.Buffer.BlockCopy(a, 0, c, 0, a.Length);
+            System.Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
+            return c;
         }
 
     }

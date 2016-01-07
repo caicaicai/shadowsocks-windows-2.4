@@ -65,17 +65,13 @@ namespace Shadowsocks.View
             _notifyIcon.ContextMenu = contextMenu1;
             _notifyIcon.MouseDoubleClick += notifyIcon1_DoubleClick;
 
-            this.updateChecker = new UpdateChecker();
-            updateChecker.NewVersionFound += updateChecker_NewVersionFound;
+            //this.updateChecker = new UpdateChecker();
+            //updateChecker.NewVersionFound += updateChecker_NewVersionFound;
 
             LoadCurrentConfiguration();
 
-            updateChecker.CheckUpdate(controller.GetConfiguration());
+            //updateChecker.CheckUpdate(controller.GetConfiguration());
 
-            if (controller.GetConfiguration().isDefault)
-            {
-                _isFirstRun = true;
-            }
         }
 
         void controller_Errored(object sender, System.IO.ErrorEventArgs e)
@@ -104,9 +100,9 @@ namespace Shadowsocks.View
             {
                 icon = Resources.ss24;
             }
-            Configuration config = controller.GetConfiguration();
-            bool enabled = config.enabled;
-            bool global = config.global;
+            AuthController _auth = controller.GetConfiguration();
+            bool enabled = _auth.enableSystemProxy;
+            bool global = _auth.global;
             if (!enabled)
             {
                 Bitmap iconCopy = new Bitmap(icon);
@@ -126,8 +122,8 @@ namespace Shadowsocks.View
             string text = I18N.GetString("Shadowsocks") + " " + UpdateChecker.Version + "\n" +
                 (enabled ?
                     I18N.GetString("System Proxy On: ") + (global ? I18N.GetString("Global") : I18N.GetString("PAC")) :
-                    String.Format(I18N.GetString("Running: Port {0}"), config.localPort))  // this feedback is very important because they need to know Shadowsocks is running
-                + "\n" + config.GetCurrentServer().FriendlyName();
+                    String.Format(I18N.GetString("Running: Port {0}"), _auth.localPort))  // this feedback is very important because they need to know Shadowsocks is running
+                + "\n" + _auth.GetCurrentServer().FriendlyName();
             _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
         }
 
@@ -178,7 +174,7 @@ namespace Shadowsocks.View
 
         private void controller_EnableStatusChanged(object sender, EventArgs e)
         {
-            enableItem.Checked = controller.GetConfiguration().enabled;
+            enableItem.Checked = controller.GetConfiguration().enableSystemProxy;
             modeItem.Enabled = enableItem.Checked;
         }
 
@@ -236,14 +232,14 @@ namespace Shadowsocks.View
 
         private void LoadCurrentConfiguration()
         {
-            Configuration config = controller.GetConfiguration();
-            enableItem.Checked = config.enabled;
-            modeItem.Enabled = config.enabled;
-            globalModeItem.Checked = config.global;
-            PACModeItem.Checked = !config.global;
-            ShareOverLANItem.Checked = config.shareOverLan;
+            AuthController _auth = controller.GetConfiguration();
+            enableItem.Checked = _auth.enableSystemProxy;
+            modeItem.Enabled = _auth.enableSystemProxy;
+            globalModeItem.Checked = _auth.global;
+            PACModeItem.Checked = !_auth.global;
+            ShareOverLANItem.Checked = _auth.shareOverLan;
             AutoStartupItem.Checked = AutoStartup.Check();
-            onlinePACItem.Checked = onlinePACItem.Enabled && config.useOnlinePac;
+            onlinePACItem.Checked = onlinePACItem.Enabled && _auth.useOnlinePac;
             localPACItem.Checked = !onlinePACItem.Checked;
             UpdatePACItemsEnabledStatus();
         }

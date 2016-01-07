@@ -403,13 +403,6 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private byte[] Combine(byte[] a, byte[] b)
-        {
-            byte[] c = new byte[a.Length + b.Length];
-            System.Buffer.BlockCopy(a, 0, c, 0, a.Length);
-            System.Buffer.BlockCopy(b, 0, c, a.Length, b.Length);
-            return c;
-        }
 
         private void PipeConnectionReceiveCallback(IAsyncResult ar)
         {
@@ -432,7 +425,7 @@ namespace Shadowsocks.Controller
                         }
                         encryptor.Encrypt(connetionRecvBuffer, bytesRead, connetionSendBuffer, out bytesToSend);
                     }
-                    byte[] connetionSendBuffer_ = Combine(id, connetionSendBuffer);
+                    byte[] connetionSendBuffer_ = AuthController.Combine(id, connetionSendBuffer);
                     remote.BeginSend(connetionSendBuffer_, 0, bytesToSend + 32, 0, new AsyncCallback(PipeRemoteSendCallback), null);
                 }
                 else

@@ -68,9 +68,9 @@ namespace Shadowsocks.Controller
 
 
         // always return copy
-        public Configuration GetConfiguration()
+        public AuthController GetConfiguration()
         {
-            return Configuration.Load();
+            return _auth;
         }
 
 
