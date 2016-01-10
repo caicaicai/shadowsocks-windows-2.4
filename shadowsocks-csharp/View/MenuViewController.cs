@@ -7,9 +7,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
-using ZXing;
-using ZXing.Common;
-using ZXing.QrCode;
 
 namespace Shadowsocks.View
 {
@@ -29,9 +26,6 @@ namespace Shadowsocks.View
         private MenuItem modeItem;
         private MenuItem AutoStartupItem;
         private MenuItem ShareOverLANItem;
-        private MenuItem SeperatorItem;
-        private MenuItem ConfigItem;
-        private MenuItem ServersItem;
         private MenuItem globalModeItem;
         private MenuItem PACModeItem;
         private MenuItem localPACItem;
@@ -40,7 +34,6 @@ namespace Shadowsocks.View
         private MenuItem updateFromGFWListItem;
         private MenuItem editGFWUserRuleItem;
         private MenuItem editOnlinePACItem;
-        private string _urlToOpen;
 
         public MenuViewController(ShadowsocksController controller)
         {
@@ -322,12 +315,6 @@ namespace Shadowsocks.View
             System.Diagnostics.Process.Start("notepad.exe", argument);
         }
 
-
-
-        void openURLFromQRCode(object sender, FormClosedEventArgs e)
-        {
-            Process.Start(_urlToOpen);
-        }
 
 		private void AutoStartupItem_Click(object sender, EventArgs e) {
 			AutoStartupItem.Checked = !AutoStartupItem.Checked;

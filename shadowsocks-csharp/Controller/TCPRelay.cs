@@ -53,7 +53,7 @@ namespace Shadowsocks.Controller
         private byte[] _firstPacket;
         private int _firstPacketLength;
         // Size of receive buffer.
-        public const int RecvSize = 60 * 1024;
+        public const int RecvSize = 64 * 1024;
         public const int BufferSize = RecvSize + 32;
         // remote receive buffer
         private byte[] remoteRecvBuffer = new byte[RecvSize];

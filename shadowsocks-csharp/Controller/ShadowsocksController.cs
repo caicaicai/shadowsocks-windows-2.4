@@ -49,7 +49,6 @@ namespace Shadowsocks.Controller
 
         public ShadowsocksController(AuthController au)
         {
-            //_config = Configuration.Load();
             _auth = au;
         }
 
@@ -242,13 +241,6 @@ namespace Shadowsocks.Controller
 
             UpdateSystemProxy();
             Util.Utils.ReleaseMemory();
-        }
-
-
-        protected void SaveConfig(Configuration newConfig)
-        {
-            Configuration.Save(newConfig);
-            Reload();
         }
 
 

@@ -150,7 +150,7 @@ namespace Shadowsocks.Controller
             {
                 Socket conn = listener.EndAccept(ar);
 
-                byte[] buf = new byte[4096];
+                byte[] buf = new byte[64 * 1024];
                 object[] state = new object[] {
                     conn,
                     buf
